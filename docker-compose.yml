@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  age-viewer:
+    build: .
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - NODE_OPTIONS=--openssl-legacy-provider
+    volumes:
+      - ./frontend/src:/app/frontend/src
+      - ./backend/src:/app/backend/src
+    command: npm run start
+
+  age-viewer-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - NODE_OPTIONS=--openssl-legacy-provider
+    profiles:
+      - production
+
+  # Optional: PostgreSQL with AGE extension
+  postgres-age:
+    image: apache/age:latest
+    ports:
+      - "5455:5432"
+    environment:
+      - POSTGRES_USER=postgresUser
+      - POSTGRES_PASSWORD=postgresPW
+      - POSTGRES_DB=postgresDB
+    volumes:
+      - age_data:/var/lib/postgresql/data
+    profiles:
+      - with-db
+
+volumes:
+  age_data:

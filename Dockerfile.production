@@ -1,0 +1,58 @@
+FROM node:14-alpine3.16 AS builder
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++ bash
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY frontend/package*.json ./frontend/
+COPY backend/package*.json ./backend/
+
+# Install dependencies
+RUN npm install
+RUN cd frontend && npm install
+RUN cd backend && npm install
+
+# Copy application source
+COPY . .
+
+# Build the application
+ENV NODE_OPTIONS=--openssl-legacy-provider
+RUN npm run build-front
+RUN npm run build-back
+
+# Production stage
+FROM node:14-alpine3.16
+
+# Install pm2 globally
+RUN npm install -g pm2
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files and install production dependencies only
+COPY package*.json ./
+COPY backend/package*.json ./backend/
+RUN npm install --only=production
+RUN cd backend && npm install --only=production
+
+# Copy built application from builder stage
+COPY --from=builder /app/backend/build ./backend/build
+COPY --from=builder /app/frontend/build ./backend/src/public
+COPY ecosystem.config.js .
+
+# Copy necessary source files for runtime
+COPY backend/src/tools ./backend/src/tools
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV NODE_OPTIONS=--openssl-legacy-provider
+
+# Expose port
+EXPOSE 3001
+
+# Start the application with pm2
+CMD ["pm2-runtime", "ecosystem.config.js"]
