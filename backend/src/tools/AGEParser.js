@@ -36,8 +36,16 @@ function AGTypeParse(input) {
 }
 
 async function setAGETypes(client, types) {
+    // Check if AGE extension exists
+    const extensionCheck = await client.query(`
+        SELECT 1 FROM pg_extension WHERE extname = 'age';
+    `);
+
+    if (extensionCheck.rows.length < 1) {
+        throw new Error('AGE extension is not installed. Please contact your database administrator to install the AGE extension.');
+    }
+
     await client.query(`
-        CREATE EXTENSION IF NOT EXISTS age;
         LOAD 'age';
         SET search_path = ag_catalog, "$user", public;
     `)
@@ -48,7 +56,7 @@ async function setAGETypes(client, types) {
         where typname = '_agtype';`);
 
     if (oidResults.rows.length < 1)
-        throw new Error();
+        throw new Error('AGE types not found. The AGE extension may not be properly installed.');
 
     types.setTypeParser(oidResults.rows[0].typelem, AGTypeParse)
 }

@@ -49,25 +49,35 @@ function setAGETypes(_x, _x2) {
 }
 function _setAGETypes() {
   _setAGETypes = (0, _asyncToGenerator2["default"])(/*#__PURE__*/_regenerator["default"].mark(function _callee(client, types) {
-    var oidResults;
+    var extensionCheck, oidResults;
     return _regenerator["default"].wrap(function (_context) {
       while (1) switch (_context.prev = _context.next) {
         case 0:
           _context.next = 1;
-          return client.query("\n        CREATE EXTENSION IF NOT EXISTS age;\n        LOAD 'age';\n        SET search_path = ag_catalog, \"$user\", public;\n    ");
+          return client.query("\n        SELECT 1 FROM pg_extension WHERE extname = 'age';\n    ");
         case 1:
-          _context.next = 2;
-          return client.query("\n        select typelem\n        from pg_type\n        where typname = '_agtype';");
-        case 2:
-          oidResults = _context.sent;
-          if (!(oidResults.rows.length < 1)) {
-            _context.next = 3;
+          extensionCheck = _context.sent;
+          if (!(extensionCheck.rows.length < 1)) {
+            _context.next = 2;
             break;
           }
-          throw new Error();
+          throw new Error('AGE extension is not installed. Please contact your database administrator to install the AGE extension.');
+        case 2:
+          _context.next = 3;
+          return client.query("\n        LOAD 'age';\n        SET search_path = ag_catalog, \"$user\", public;\n    ");
         case 3:
-          types.setTypeParser(oidResults.rows[0].typelem, AGTypeParse);
+          _context.next = 4;
+          return client.query("\n        select typelem\n        from pg_type\n        where typname = '_agtype';");
         case 4:
+          oidResults = _context.sent;
+          if (!(oidResults.rows.length < 1)) {
+            _context.next = 5;
+            break;
+          }
+          throw new Error('AGE types not found. The AGE extension may not be properly installed.');
+        case 5:
+          types.setTypeParser(oidResults.rows[0].typelem, AGTypeParse);
+        case 6:
         case "end":
           return _context.stop();
       }
