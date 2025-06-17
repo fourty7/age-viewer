@@ -1,0 +1,33 @@
+FROM node:14-alpine3.16
+
+# Install dependencies including git
+RUN apk add --no-cache python3 make g++ bash git
+
+# Install pm2 globally
+RUN npm install -g pm2
+
+# Set working directory
+WORKDIR /app
+
+# Clone the repository
+RUN git clone https://github.com/fourty7/age-viewer.git .
+
+# Fix the uuid import issue
+RUN sed -i "s/import { uuid } from 'cytoscape\/src\/util';/import uuid from 'react-uuid';/g" \
+    frontend/src/components/cypherresult/presentations/CypherResultTable.jsx
+
+# Install @babel/runtime in backend to fix missing dependency
+RUN cd backend && npm install @babel/runtime
+
+# Run setup to install all dependencies
+RUN npm run setup
+
+# Build the application
+RUN npm run build-front
+RUN npm run build-back
+
+# Expose ports
+EXPOSE 3000 3001
+
+# Start the application
+CMD ["npm", "run", "start"]

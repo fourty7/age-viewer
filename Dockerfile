@@ -26,8 +26,8 @@ COPY . .
 RUN npm run build-front
 RUN npm run build-back
 
-# Set environment variable for OpenSSL legacy provider
-ENV NODE_OPTIONS=--openssl-legacy-provider
+# Node 14 doesn't need the OpenSSL legacy provider flag
+# ENV NODE_OPTIONS=--openssl-legacy-provider
 
 # Expose ports
 EXPOSE 3000 3001

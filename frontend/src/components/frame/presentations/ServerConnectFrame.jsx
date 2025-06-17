@@ -17,11 +17,12 @@
  * under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Col, Form, Input, InputNumber, Row,
+  Button, Col, Form, Input, InputNumber, Row, Switch, Upload, message, Select,
 } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 import { useDispatch } from 'react-redux';
 import Frame from '../Frame';
 
@@ -47,8 +48,53 @@ const ServerConnectFrame = ({
   currentGraph,
 }) => {
   const dispatch = useDispatch();
+  const [sslEnabled, setSslEnabled] = useState(false);
+  const [sslMode, setSslMode] = useState('require');
+  const [certificates, setCertificates] = useState({
+    ca: null,
+    cert: null,
+    key: null,
+  });
 
-  const connectToDatabase = (data) => dispatch(connectToDatabaseApi(data)).then((response) => {
+  const handleFileRead = (file, certType) => new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setCertificates((prev) => ({ ...prev, [certType]: e.target.result }));
+      resolve();
+    };
+    reader.readAsText(file);
+  });
+
+  const uploadProps = (certType) => ({
+    beforeUpload: (file) => {
+      handleFileRead(file, certType);
+      return false;
+    },
+    maxCount: 1,
+  });
+
+  const connectToDatabase = async (data) => {
+    const connectionData = { ...data };
+    
+    if (sslEnabled) {
+      if (sslMode === 'disable') {
+        connectionData.ssl = false;
+      } else if (sslMode === 'no-verify') {
+        connectionData.ssl = { rejectUnauthorized: false };
+      } else {
+        const sslConfig = {
+          rejectUnauthorized: sslMode === 'verify-full' || sslMode === 'verify-ca',
+        };
+        
+        if (certificates.ca) sslConfig.ca = certificates.ca;
+        if (certificates.cert) sslConfig.cert = certificates.cert;
+        if (certificates.key) sslConfig.key = certificates.key;
+        
+        connectionData.ssl = sslConfig;
+      }
+    }
+    
+    return dispatch(connectToDatabaseApi(connectionData)).then((response) => {
     if (response.type === 'database/connectToDatabase/fulfilled') {
       dispatch(addAlert('NoticeServerConnected'));
       dispatch(trimFrame('ServerConnect'));
@@ -68,6 +114,7 @@ const ServerConnectFrame = ({
       dispatch(addAlert('ErrorServerConnectFail', response.error.message));
     }
   });
+  };
 
   return (
     <Frame
@@ -102,6 +149,47 @@ const ServerConnectFrame = ({
               <Form.Item name="password" label="Password" rules={[{ required: true }]}>
                 <Input.Password placeholder="postgres" />
               </Form.Item>
+              
+              <Form.Item label="Enable SSL/TLS">
+                <Switch checked={sslEnabled} onChange={setSslEnabled} />
+              </Form.Item>
+              
+              {sslEnabled && (
+                <>
+                  <Form.Item label="SSL Mode">
+                    <Select value={sslMode} onChange={setSslMode} style={{ width: '100%' }}>
+                      <Select.Option value="disable">Disable</Select.Option>
+                      <Select.Option value="no-verify">No Verify</Select.Option>
+                      <Select.Option value="require">Require</Select.Option>
+                      <Select.Option value="verify-ca">Verify CA</Select.Option>
+                      <Select.Option value="verify-full">Verify Full</Select.Option>
+                    </Select>
+                  </Form.Item>
+                  
+                  {(sslMode === 'verify-ca' || sslMode === 'verify-full' || sslMode === 'require') && (
+                    <>
+                      <Form.Item label="CA Certificate">
+                        <Upload {...uploadProps('ca')}>
+                          <Button icon={<UploadOutlined />}>Upload CA Certificate</Button>
+                        </Upload>
+                      </Form.Item>
+                      
+                      <Form.Item label="Client Certificate (Optional)">
+                        <Upload {...uploadProps('cert')}>
+                          <Button icon={<UploadOutlined />}>Upload Client Certificate</Button>
+                        </Upload>
+                      </Form.Item>
+                      
+                      <Form.Item label="Client Key (Optional)">
+                        <Upload {...uploadProps('key')}>
+                          <Button icon={<UploadOutlined />}>Upload Client Key</Button>
+                        </Upload>
+                      </Form.Item>
+                    </>
+                  )}
+                </>
+              )}
+              
               <Form.Item>
                 <Button type="primary" htmlType="submit">Connect</Button>
               </Form.Item>

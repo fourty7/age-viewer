@@ -8,7 +8,6 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=development
-      - NODE_OPTIONS=--openssl-legacy-provider
     volumes:
       - ./frontend/src:/app/frontend/src
       - ./backend/src:/app/backend/src
@@ -22,7 +21,6 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=production
-      - NODE_OPTIONS=--openssl-legacy-provider
     profiles:
       - production
 

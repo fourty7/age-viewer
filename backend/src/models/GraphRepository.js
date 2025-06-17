@@ -25,7 +25,7 @@ import { getQuery } from '../tools/SQLFlavorManager';
 
 
 class GraphRepository {
-    constructor({host, port, database, graph, user, password, graphs=[], server} = {}) {
+    constructor({host, port, database, graph, user, password, graphs=[], server, ssl} = {}) {
         this._host = host;
         this._port = port;
         this._database = database;
@@ -34,6 +34,7 @@ class GraphRepository {
         this._graph = graph;
         this._user = user;
         this._password = password;
+        this._ssl = ssl;
     }
     /*
     static async getConnection({
@@ -138,7 +139,7 @@ class GraphRepository {
         if (!this._host || !this._port || !this._database) {
             return null;
         }
-        return {
+        const config = {
             host: this._host,
             port: this._port,
             database: this._database,
@@ -149,6 +150,12 @@ class GraphRepository {
             idleTimeoutMillis: PgConfig.idleTimeoutMillis,
             connectionTimeoutMillis: PgConfig.connectionTimeoutMillis,
         };
+        
+        if (this._ssl) {
+            config.ssl = this._ssl;
+        }
+        
+        return config;
     }
 
     /**
