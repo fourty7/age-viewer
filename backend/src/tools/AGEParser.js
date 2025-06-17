@@ -45,11 +45,6 @@ async function setAGETypes(client, types) {
         throw new Error('AGE extension is not installed. Please contact your database administrator to install the AGE extension.');
     }
 
-    await client.query(`
-        LOAD 'age';
-        SET search_path = ag_catalog, "$user", public;
-    `)
-
     const oidResults = await client.query(`
         select typelem
         from pg_type
