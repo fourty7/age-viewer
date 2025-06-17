@@ -20,7 +20,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Col, Form, Input, InputNumber, Row, Switch, Upload, message, Select,
+  Button, Col, Form, Input, InputNumber, Row, Switch, Upload, Select,
 } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { useDispatch } from 'react-redux';
@@ -75,7 +75,6 @@ const ServerConnectFrame = ({
 
   const connectToDatabase = async (data) => {
     const connectionData = { ...data };
-    
     if (sslEnabled) {
       if (sslMode === 'disable') {
         connectionData.ssl = false;
@@ -85,35 +84,33 @@ const ServerConnectFrame = ({
         const sslConfig = {
           rejectUnauthorized: sslMode === 'verify-full' || sslMode === 'verify-ca',
         };
-        
         if (certificates.ca) sslConfig.ca = certificates.ca;
         if (certificates.cert) sslConfig.cert = certificates.cert;
         if (certificates.key) sslConfig.key = certificates.key;
-        
+
         connectionData.ssl = sslConfig;
       }
     }
-    
     return dispatch(connectToDatabaseApi(connectionData)).then((response) => {
-    if (response.type === 'database/connectToDatabase/fulfilled') {
-      dispatch(addAlert('NoticeServerConnected'));
-      dispatch(trimFrame('ServerConnect'));
-      dispatch(getMetaData({ currentGraph })).then((metadataResponse) => {
-        if (metadataResponse.type === 'database/getMetaData/fulfilled') {
-          const graphName = Object.keys(metadataResponse.payload)[0];
-          /* dispatch(getMetaChartData()); */
-          dispatch(changeGraph({ graphName }));
-        }
-        if (metadataResponse.type === 'database/getMetaData/rejected') {
-          dispatch(addAlert('ErrorMetaFail'));
-        }
-      });
+      if (response.type === 'database/connectToDatabase/fulfilled') {
+        dispatch(addAlert('NoticeServerConnected'));
+        dispatch(trimFrame('ServerConnect'));
+        dispatch(getMetaData({ currentGraph })).then((metadataResponse) => {
+          if (metadataResponse.type === 'database/getMetaData/fulfilled') {
+            const graphName = Object.keys(metadataResponse.payload)[0];
+            /* dispatch(getMetaChartData()); */
+            dispatch(changeGraph({ graphName }));
+          }
+          if (metadataResponse.type === 'database/getMetaData/rejected') {
+            dispatch(addAlert('ErrorMetaFail'));
+          }
+        });
 
-      dispatch(addFrame(':server status', 'ServerStatus'));
-    } else if (response.type === 'database/connectToDatabase/rejected') {
-      dispatch(addAlert('ErrorServerConnectFail', response.error.message));
-    }
-  });
+        dispatch(addFrame(':server status', 'ServerStatus'));
+      } else if (response.type === 'database/connectToDatabase/rejected') {
+        dispatch(addAlert('ErrorServerConnectFail', response.error.message));
+      }
+    });
   };
 
   return (
@@ -149,11 +146,10 @@ const ServerConnectFrame = ({
               <Form.Item name="password" label="Password" rules={[{ required: true }]}>
                 <Input.Password placeholder="postgres" />
               </Form.Item>
-              
+
               <Form.Item label="Enable SSL/TLS">
                 <Switch checked={sslEnabled} onChange={setSslEnabled} />
               </Form.Item>
-              
               {sslEnabled && (
                 <>
                   <Form.Item label="SSL Mode">
@@ -165,23 +161,32 @@ const ServerConnectFrame = ({
                       <Select.Option value="verify-full">Verify Full</Select.Option>
                     </Select>
                   </Form.Item>
-                  
                   {(sslMode === 'verify-ca' || sslMode === 'verify-full' || sslMode === 'require') && (
                     <>
                       <Form.Item label="CA Certificate">
-                        <Upload {...uploadProps('ca')}>
+                        <Upload
+                          beforeUpload={uploadProps('ca').beforeUpload}
+                          showUploadList={uploadProps('ca').showUploadList}
+                          maxCount={uploadProps('ca').maxCount}
+                        >
                           <Button icon={<UploadOutlined />}>Upload CA Certificate</Button>
                         </Upload>
                       </Form.Item>
-                      
                       <Form.Item label="Client Certificate (Optional)">
-                        <Upload {...uploadProps('cert')}>
+                        <Upload
+                          beforeUpload={uploadProps('cert').beforeUpload}
+                          showUploadList={uploadProps('cert').showUploadList}
+                          maxCount={uploadProps('cert').maxCount}
+                        >
                           <Button icon={<UploadOutlined />}>Upload Client Certificate</Button>
                         </Upload>
                       </Form.Item>
-                      
                       <Form.Item label="Client Key (Optional)">
-                        <Upload {...uploadProps('key')}>
+                        <Upload
+                          beforeUpload={uploadProps('key').beforeUpload}
+                          showUploadList={uploadProps('key').showUploadList}
+                          maxCount={uploadProps('key').maxCount}
+                        >
                           <Button icon={<UploadOutlined />}>Upload Client Key</Button>
                         </Upload>
                       </Form.Item>
@@ -189,7 +194,7 @@ const ServerConnectFrame = ({
                   )}
                 </>
               )}
-              
+
               <Form.Item>
                 <Button type="primary" htmlType="submit">Connect</Button>
               </Form.Item>
