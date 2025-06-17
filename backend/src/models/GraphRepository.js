@@ -125,7 +125,8 @@ class GraphRepository {
      */
     async releaseConnection() {
         try {
-            await this._pool.end();
+            // Don't end the pool - just mark as disconnected
+            // The pool will be reused for future connections
             return true;
         } catch (err) {
             throw err;

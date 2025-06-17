@@ -284,19 +284,16 @@ var GraphRepository = /*#__PURE__*/function () {
           while (1) switch (_context7.prev = _context7.next) {
             case 0:
               _context7.prev = 0;
-              _context7.next = 1;
-              return this._pool.end();
-            case 1:
               return _context7.abrupt("return", true);
-            case 2:
-              _context7.prev = 2;
+            case 1:
+              _context7.prev = 1;
               _t4 = _context7["catch"](0);
               throw _t4;
-            case 3:
+            case 2:
             case "end":
               return _context7.stop();
           }
-        }, _callee7, this, [[0, 2]]);
+        }, _callee7, null, [[0, 1]]);
       }));
       function releaseConnection() {
         return _releaseConnection.apply(this, arguments);
